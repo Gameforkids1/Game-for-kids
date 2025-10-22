@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Suite Educativa — Juegos</title>
+<style>
+  body { font-family: Arial, sans-serif; margin:0; background:#f4f7fa; }
+  header { background:#4a90e2; color:white; padding:1rem; text-align:center; }
+  nav { display:flex; flex-wrap:wrap; justify-content:center; gap:.5rem; margin:1rem; }
+  nav button { padding:.7rem 1rem; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+  .math-btn{background:#ff6f61;color:white;}
+  .eng-btn{background:#50c878;color:white;}
+  .bio-btn{background:#f4c542;color:black;}
+  .fig-btn{background:#9b59b6;color:white;}
+  .ani-btn{background:#e67e22;color:white;}
+  main{padding:1rem;}
+  .view{display:none;}
+  .visible{display:block;}
+  .panel{background:white;padding:1rem;border-radius:12px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:1rem;}
+  .hud{display:flex;justify-content:space-between;margin-top:1rem;}
+  .problem,.instruction{font-size:1.3rem;margin:1rem 0;}
+  .answer-row{display:flex;gap:.5rem;}
+  .answer-row input{flex:1;padding:.5rem;}
+  .btns-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;}
+  .feedback{margin-top:.5rem;font-weight:bold;}
+  .emoji-card{font-size:2rem;cursor:pointer;border:1px solid #ccc;padding:1rem;border-radius:8px;display:inline-block;margin:4px;}
+  canvas{border:1px solid #ccc;display:block;margin:10px auto;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎮 Suite Educativa</h1>
+  <p>Puntaje Global: <span id="global-score">0</span></p>
+</header>
+<nav>
+  <button class="math-btn" data-view="math">Matemáticas</button>
+  <button class="eng-btn" data-view="english">Inglés</button>
+  <button class="bio-btn" data-view="biology">Biología</button>
+  <button class="fig-btn" data-view="shapes">Figuras</button>
+  <button class="ani-btn" data-view="animals">Animales</button>
+</nav>
+<main id="views">
+  <!-- Matemáticas -->
+  <section id="view-math" class="view">
+    <div class="panel">
+      <h2>🧮 Matemáticas</h2>
+      <div class="btns-row">
+        <button onclick="startAdds()">Sumas</button>
+        <button onclick="startSubs()">Restas</button>
+        <button onclick="startMults()">Multiplicaciones</button>
+        <button onclick="startOps()">Operaciones</button>
+      </div>
+      <div id="math-game"></div>
+    </div>
+  </section>
+
+  <!-- Inglés -->
+  <section id="view-english" class="view">
+    <div class="panel">
+      <h2>🇬🇧 Inglés</h2>
+      <div class="btns-row">
+        <button onclick="startEngImgs()">Imágenes</button>
+        <button onclick="startEngTranslate()">Traducciones</button>
+        <button onclick="startEngFill()">Completar frases</button>
+      </div>
+      <div id="eng-game"></div>
+    </div>
+  </section>
+
+  <!-- Biología -->
+  <section id="view-biology" class="view">
+    <div class="panel">
+      <h2>🧬 Biología</h2>
+      <div class="btns-row">
+        <button onclick="startBioTrivia()">Trivia</button>
+        <button onclick="startBioMemory()">Memorama</button>
+      </div>
+      <div id="bio-game"></div>
+    </div>
+  </section>
+
+  <!-- Figuras -->
+  <section id="view-shapes" class="view">
+    <div class="panel">
+      <h2>🔺 Figuras geométricas</h2>
+      <canvas id="sh-canvas" width="200" height="200"></canvas>
+      <div class="btns-row" id="sh-btns">
+        <button data-shape="círculo">Círculo</button>
+        <button data-shape="cuadrado">Cuadrado</button>
+        <button data-shape="triángulo">Triángulo</button>
+      </div>
+      <div id="sh-feedback" class="feedback"></div>
+    </div>
+  </section>
+
+  <!-- Animales -->
+  <section id="view-animals" class="view">
+    <div class="panel">
+      <h2>🐾 Animales (Memorama)</h2>
+      <div id="ani-board"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* -------------------------
+   Sistema global de puntaje
+   ------------------------- */
+let globalScore = 0;
+function addScore(p){
+  globalScore += p;
+  document.getElementById("global-score").textContent = globalScore;
+}
+
+/* ---- Navegación ---- */
+document.querySelectorAll("nav button").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("visible"));
+    document.getElementById("view-"+btn.dataset.view).classList.add("visible");
+  });
+});
+document.getElementById("view-math").classList.add("visible");
+
+/* ---- Matemáticas ---- */
+function startAdds(){
+  const c=document.getElementById("math-game");
+  let a=Math.floor(Math.random()*10), b=Math.floor(Math.random()*10);
+  c.innerHTML = `<div class="problem">${a}+${b} = ?</div>
+    <div class="answer-row"><input id="m-ans" autocomplete="off"><button onclick="checkAns(${a+b})">OK</button></div>
+    <div id="m-feedback" class="feedback"></div>`;
+}
+function startSubs(){
+  const c=document.getElementById("math-game");
+  let a=Math.floor(Math.random()*10+5), b=Math.floor(Math.random()*5);
+  c.innerHTML = `<div class="problem">${a}-${b} = ?</div>
+    <div class="answer-row"><input id="m-ans" autocomplete="off"><button onclick="checkAns(${a-b})">OK</button></div>
+    <div id="m-feedback" class="feedback"></div>`;
+}
+function startMults(){
+  const c=document.getElementById("math-game");
+  let a=Math.floor(Math.random()*6), b=Math.floor(Math.random()*6);
+  c.innerHTML = `<div class="problem">${a}×${b} = ?</div>
+    <div class="answer-row"><input id="m-ans" autocomplete="off"><button onclick="checkAns(${a*b})">OK</button></div>
+    <div id="m-feedback" class="feedback"></div>`;
+}
+function startOps(){
+  const ops=["+","-","×"];
+  let a=Math.floor(Math.random()*10), b=Math.floor(Math.random()*10);
+  let op=ops[Math.floor(Math.random()*3)];
+  let res = op=="+"?a+b:op=="-"?a-b:a*b;
+  const c=document.getElementById("math-game");
+  c.innerHTML = `<div class="problem">${a}${op}${b} = ?</div>
+    <div class="answer-row"><input id="m-ans" autocomplete="off"><button onclick="checkAns(${res})">OK</button></div>
+    <div id="m-feedback" class="feedback"></div>`;
+}
+function checkAns(correct){
+  const ansEl = document.getElementById("m-ans");
+  const fb = document.getElementById("m-feedback");
+  const val = parseInt(ansEl.value);
+  if(!isNaN(val) && val === correct){
+    fb.textContent = "✅ Correcto";
+    addScore(5);
+  } else {
+    fb.textContent = "❌ Incorrecto. La respuesta era " + correct;
+  }
+}
+
+/* ---- Inglés ---- */
+function startEngImgs(){
+  const imgs = [{q:"🍎", a:"apple"},{q:"🐶", a:"dog"},{q:"☀️", a:"sun"}];
+  let i = 0;
+  const c = document.getElementById("eng-game");
+  function show(){
+    c.innerHTML = `<div class="problem">¿Qué es en inglés ${imgs[i].q}?</div>
+      <div class="answer-row"><input id="e-ans" autocomplete="off"><button id="e-ok">OK</button></div>
+      <div id="e-fb" class="feedback"></div>`;
+    document.getElementById("e-ok").onclick = chk;
+  }
+  function chk(){
+    const val = document.getElementById("e-ans").value.trim().toLowerCase();
+    const fb = document.getElementById("e-fb");
+    if(val === imgs[i].a){ fb.textContent = "✅ Correcto"; addScore(5); }
+    else { fb.textContent = "❌ Incorrecto. Era " + imgs[i].a; }
+    i = (i+1) % imgs.length;
+    setTimeout(show, 1200);
+  }
+  show();
+}
+function startEngTranslate(){
+  const qs = [{q:"Hola", a:"hello"},{q:"Gracias", a:"thank you"},{q:"Adiós", a:"goodbye"}];
+  let i = 0;
+  const c = document.getElementById("eng-game");
+  function show(){
+    c.innerHTML = `<div class="problem">Traduce: ${qs[i].q}</div>
+      <div class="answer-row"><input id="et-ans" autocomplete="off"><button id="et-ok">OK</button></div>
+      <div id="et-fb" class="feedback"></div>`;
+    document.getElementById("et-ok").onclick = chk;
+  }
+  function chk(){
+    const val = document.getElementById("et-ans").value.trim().toLowerCase();
+    const fb = document.getElementById("et-fb");
+    if(val === qs[i].a){ fb.textContent = "✅ Correcto"; addScore(5); }
+    else { fb.textContent = "❌ Incorrecto. Era " + qs[i].a; }
+    i = (i+1) % qs.length;
+    setTimeout(show, 1200);
+  }
+  show();
+}
+function startEngFill(){
+  const qs = [{q:"I ___ happy", a:"am"},{q:"You ___ my friend", a:"are"}];
+  let i = 0;
+  const c = document.getElementById("eng-game");
+  function show(){
+    c.innerHTML = `<div class="problem">${qs[i].q}</div>
+      <div class="answer-row"><input id="ef-ans" autocomplete="off"><button id="ef-ok">OK</button></div>
+      <div id="ef-fb" class="feedback"></div>`;
+    document.getElementById("ef-ok").onclick = chk;
+  }
+  function chk(){
+    const val = document.getElementById("ef-ans").value.trim().toLowerCase();
+    const fb = document.getElementById("ef-fb");
+    if(val === qs[i].a){ fb.textContent = "✅ Correcto"; addScore(5); }
+    else { fb.textContent = "❌ Incorrecto. Era " + qs[i].a; }
+    i = (i+1) % qs.length;
+    setTimeout(show, 1200);
+  }
+  show();
+}
+
+/* ---- Biología ---- */
+function startBioTrivia(){
+  const qs = [{q:"¿Cuál es el órgano que bombea sangre?", a:"corazón"},{q:"¿Qué respiran los pulmones?", a:"oxígeno"}];
+  let i = 0;
+  const c = document.getElementById("bio-game");
+  function show(){
+    c.innerHTML = `<div class="problem">${qs[i].q}</div>
+      <div class="answer-row"><input id="b-ans" autocomplete="off"><button id="b-ok">OK</button></div>
+      <div id="b-fb" class="feedback"></div>`;
+    document.getElementById("b-ok").onclick = chk;
+  }
+  function chk(){
+    const val = document.getElementById("b-ans").value.trim().toLowerCase();
+    const fb = document.getElementById("b-fb");
+    if(val === qs[i].a){ fb.textContent = "✅ Correcto"; addScore(5); }
+    else { fb.textContent = "❌ Incorrecto. Era " + qs[i].a; }
+    i = (i+1) % qs.length;
+    setTimeout(show, 1200);
+  }
+  show();
+}
+function startBioMemory(){
+  const c = document.getElementById("bio-game"); c.innerHTML = "";
+  const items = ["🦁","🦁","🐸","🐸","🐢","🐢"]; items.sort(()=>Math.random()-0.5);
+  let opened = [], matched = 0;
+  items.forEach(it=>{
+    const d = document.createElement("div"); d.className = "emoji-card"; d.textContent = "❓";
+    d.onclick = ()=>{
+      if(d.textContent === "❓" && opened.length < 2){
+        d.textContent = it; opened.push({d,it});
+        if(opened.length === 2){
+          if(opened[0].it === opened[1].it){
+            addScore(5); matched += 2; opened = [];
+            if(matched === items.length) setTimeout(()=>alert("¡Ganaste el memorama de Biología!"),300);
+          } else {
+            setTimeout(()=>{ opened[0].d.textContent = "❓"; opened[1].d.textContent = "❓"; opened = []; }, 800);
+          }
+        }
+      }
+    };
+    c.appendChild(d);
+  });
+}
+
+/* ---- Figuras (auto + botón de respuesta) ---- */
+const shapes = ["círculo","cuadrado","triángulo"];
+let shIndex = 0;
+let currentShape = shapes[0];
+let shAnswered = false;
+let shTimer = null;
+const shCanvas = document.getElementById("sh-canvas");
+const shCtx = shCanvas.getContext("2d");
+const shFb = document.getElementById("sh-feedback");
+function drawShape(ctx, shape){
+  ctx.clearRect(0,0,200,200);
+  ctx.beginPath();
+  if(shape === "círculo"){ ctx.arc(100,100,50,0,2*Math.PI); }
+  else if(shape === "cuadrado"){ ctx.rect(50,50,100,100); }
+  else if(shape === "triángulo"){ ctx.moveTo(100,30); ctx.lineTo(30,170); ctx.lineTo(170,170); ctx.closePath(); }
+  ctx.stroke();
+}
+function showShape(){
+  currentShape = shapes[shIndex];
+  drawShape(shCtx, currentShape);
+  shAnswered = false;
+  shFb.textContent = "¿Qué figura es? (elige un botón)";
+  // prepara el siguiente índice
+  shIndex = (shIndex + 1) % shapes.length;
+  // programa siguiente cambio automático
+  clearTimeout(shTimer);
+  shTimer = setTimeout(showShape, 2000);
+}
+// manejar clicks de respuesta
+document.getElementById("sh-btns").addEventListener("click", (e)=>{
+  if(e.target.tagName !== "BUTTON") return;
+  if(shAnswered) return; // evitar respuestas múltiples
+  shAnswered = true;
+  clearTimeout(shTimer); // detener cambio automático momentáneamente
+  const guess = e.target.dataset.shape; // 'círculo', 'cuadrado' o 'triángulo'
+  if(guess === currentShape){
+    shFb.textContent = "✅ Correcto — era " + currentShape;
+    addScore(5);
+  } else {
+    shFb.textContent = "❌ Incorrecto. Era " + currentShape;
+  }
+  // avanzar rápido al siguiente (espera corta para que vea la respuesta)
+  shTimer = setTimeout(showShape, 1000);
+});
+// iniciar ciclo de figuras
+showShape();
+
+/* ---- Animales (memorama) ---- */
+function startAnimals(){
+  const c = document.getElementById("ani-board"); c.innerHTML = "";
+  const items = ["🐶","🐶","🐱","🐱","🐵","🐵"]; items.sort(()=>Math.random()-0.5);
+  let opened = [], matched = 0;
+  items.forEach(it=>{
+    const d = document.createElement("div"); d.className = "emoji-card"; d.textContent = "❓";
+    d.onclick = ()=>{
+      if(d.textContent === "❓" && opened.length < 2){
+        d.textContent = it; opened.push({d,it});
+        if(opened.length === 2){
+          if(opened[0].it === opened[1].it){
+            addScore(5); matched += 2; opened = [];
+            if(matched === items.length) setTimeout(()=>alert("¡Completaste el memorama de Animales!"),300);
+          } else {
+            setTimeout(()=>{ opened[0].d.textContent = "❓"; opened[1].d.textContent = "❓"; opened = []; }, 800);
+          }
+        }
+      }
+    };
+    c.appendChild(d);
+  });
+}
+startAnimals(); // inicia tablero de animales por defecto
+
+</script>
+</body>
+</html>
